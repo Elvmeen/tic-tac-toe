@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101522"><meta name="description" content="Play Tic-Tac-Toe against an unbeatable computer opponent."><title>Tic-Tac-Toe — Play the Computer</title>
+<style>
+:root{color-scheme:dark;--bg:#101522;--panel:#192235;--cell:#222f46;--line:#34445f;--text:#f3f6fc;--muted:#aab6ca;--accent:#8b9cff;--win:#56d6a1}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 0,#263656 0,transparent 55%),var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;display:grid;place-items:center;padding:24px}
+main{width:min(100%,460px)}header{text-align:center;margin-bottom:24px}h1{font-size:clamp(2rem,7vw,2.7rem);letter-spacing:-.05em;margin:0 0 5px}header p,.hint{color:var(--muted);margin:0}.panel{background:rgba(25,34,53,.94);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 22px 70px #0005}
+.status{text-align:center;font-weight:650;font-size:1.08rem;min-height:32px;margin:0 0 16px}.scores{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:18px}.score{background:#111a2a;border:1px solid var(--line);border-radius:13px;padding:10px;text-align:center}.score strong{display:block;font-size:1.4rem}.score span{font-size:.78rem;color:var(--muted)}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;aspect-ratio:1}.cell{border:1px solid var(--line);border-radius:16px;background:var(--cell);font-size:clamp(2.7rem,14vw,4.2rem);font-weight:750;display:grid;place-items:center;color:var(--text);cursor:pointer;transition:background .15s,transform .15s}.cell:disabled{cursor:default}.cell:not(:disabled):hover{background:#2c3b57;transform:translateY(-2px)}.cell.x{color:#aab7ff}.cell.o{color:#69ddb0}.cell.winner{background:#214638;border-color:var(--win)}
+.actions{display:flex;gap:10px;margin-top:18px}.actions button{flex:1;border:0;border-radius:12px;padding:13px 16px;font:inherit;font-weight:650;cursor:pointer}.primary{background:var(--accent);color:#11182a}.secondary{background:#29364d;color:var(--text)}button:focus-visible{outline:3px solid white;outline-offset:3px}.hint{text-align:center;font-size:.82rem;margin-top:15px}
+</style></head>
+<body><main><header><h1>Tic-Tac-Toe</h1><p>You’re X. The computer is O.</p></header>
+<section class="panel" aria-label="Tic-Tac-Toe game">
+<p class="status" id="status" aria-live="polite">Your turn — make a move.</p>
+<div class="scores" aria-label="Scoreboard"><div class="score"><strong id="wins">0</strong><span>Your wins</span></div><div class="score"><strong id="draws">0</strong><span>Draws</span></div><div class="score"><strong id="losses">0</strong><span>Computer wins</span></div></div>
+<div class="board" id="board" role="group" aria-label="Game board"></div>
+<div class="actions"><button class="primary" id="new">New game</button><button class="secondary" id="reset">Reset score</button></div>
+<p class="hint">The computer uses an unbeatable strategy. Can you force a draw?</p>
+</section></main>
+<script>
+const boardEl=document.getElementById('board'),statusEl=document.getElementById('status');
+const winsEl=document.getElementById('wins'),drawsEl=document.getElementById('draws'),lossesEl=document.getElementById('losses');
+let board=Array(9).fill(''),finished=false,busy=false,scores={X:0,D:0,O:0},winning=[];
+const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function outcome(b){for(const line of lines){const [a,c,d]=line;if(b[a]&&b[a]===b[c]&&b[a]===b[d])return {winner:b[a],line};}return b.every(Boolean)?{winner:'D',line:[]}:null;}
+function render(){boardEl.innerHTML='';board.forEach((v,i)=>{const btn=document.createElement('button');btn.className='cell'+(v?' '+v.toLowerCase():'')+(winning.includes(i)?' winner':'');btn.textContent=v;btn.disabled=!!v||finished||busy;btn.setAttribute('aria-label','Square '+(i+1)+(v?', '+v:' empty'));btn.addEventListener('click',()=>humanMove(i));boardEl.append(btn);});}
+function finish(result){finished=true;winning=result.line;if(result.winner==='X'){scores.X++;statusEl.textContent='You win! Nice move.';}else if(result.winner==='O'){scores.O++;statusEl.textContent='Computer wins. Try again!';}else{scores.D++;statusEl.textContent="It’s a draw!";}updateScores();render();}
+function updateScores(){winsEl.textContent=scores.X;drawsEl.textContent=scores.D;lossesEl.textContent=scores.O;}
+function minimax(b,player,depth){const res=outcome(b);if(res)return {score:res.winner==='O'?10-depth:res.winner==='X'?depth-10:0};let best={score:player==='O'?-Infinity:Infinity,index:-1};for(let i=0;i<9;i++){if(b[i])continue;b[i]=player;const s=minimax(b,player==='O'?'X':'O',depth+1).score;b[i]='';if((player==='O'&&s>best.score)||(player==='X'&&s<best.score))best={score:s,index:i};}return best;}
+function humanMove(i){if(finished||busy||board[i])return;board[i]='X';let res=outcome(board);if(res){finish(res);return;}busy=true;statusEl.textContent='Computer is thinking…';render();setTimeout(()=>{const move=minimax(board,'O',0).index;if(move>=0)board[move]='O';busy=false;res=outcome(board);if(res)finish(res);else{statusEl.textContent='Your turn — make a move.';render();}},280);}
+function newGame(){board=Array(9).fill('');finished=false;busy=false;winning=[];statusEl.textContent='Your turn — make a move.';render();}
+document.getElementById('new').addEventListener('click',newGame);
+document.getElementById('reset').addEventListener('click',()=>{scores={X:0,D:0,O:0};updateScores();newGame();});
+newGame();
+</script></body></html>
