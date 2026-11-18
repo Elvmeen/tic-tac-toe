@@ -4,9 +4,10 @@ A responsive, single-page Tic-Tac-Toe game where you play as **X** against the c
 
 ## Features
 
-- Unbeatable computer opponent using the Minimax algorithm.
+- Three computer difficulty levels: Easy (random moves), Medium (limited-depth strategy), and Hard (full Minimax, unbeatable with optimal play).
 - Win, loss, and draw detection with the winning line highlighted.
 - Scoreboard for wins, draws, and computer wins.
+- Change difficulty between games; starting a new difficulty resets the current board but keeps the scoreboard.
 - New game and reset score controls.
 - Responsive layout and accessible board controls.
 - No framework, dependencies, backend, or build step required.
